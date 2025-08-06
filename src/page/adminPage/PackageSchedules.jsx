@@ -10,15 +10,22 @@ const PackageScheduleManagement = () => {
 
   const [schedules, setSchedules] = useState([]);
   const [showForm, setShowForm] = useState(false);
-
   const [selectedPackage, setSelectedPackage] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [amount, setAmount] = useState("");
-
   const [daySchedules, setDaySchedules] = useState([]);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [skipEffect, setSkipEffect] = useState(false);
+
   useEffect(() => {
+    if (skipEffect) {
+      setSkipEffect(false);
+      return;
+    }
+
     if (fromDate && toDate) {
       const start = new Date(fromDate);
       const end = new Date(toDate);
@@ -75,7 +82,14 @@ const PackageScheduleManagement = () => {
   };
 
   const handleSubmitPackageSchedule = () => {
-    if (!selectedPackage || !fromDate || !toDate || !amount || daySchedules.length === 0) return;
+    if (
+      !selectedPackage ||
+      !fromDate ||
+      !toDate ||
+      !amount ||
+      daySchedules.length === 0
+    )
+      return;
 
     const fullSchedule = {
       packageTitle: selectedPackage,
@@ -85,8 +99,38 @@ const PackageScheduleManagement = () => {
       days: daySchedules,
     };
 
-    setSchedules([...schedules, fullSchedule]);
+    if (isEditing && editingIndex !== null) {
+      const updated = [...schedules];
+      updated[editingIndex] = fullSchedule;
+      setSchedules(updated);
+    } else {
+      setSchedules([...schedules, fullSchedule]);
+    }
+
     resetAll();
+  };
+
+  const handleEditSchedule = (index) => {
+    const pkg = schedules[index];
+    setSelectedPackage(pkg.packageTitle);
+    setFromDate(pkg.fromDate);
+    setToDate(pkg.toDate);
+    setAmount(pkg.amount);
+    setDaySchedules(pkg.days);
+    setSkipEffect(true);
+    setShowForm(true);
+    setIsEditing(true);
+    setEditingIndex(index);
+  };
+
+  const handleDeleteSchedule = (index) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this schedule?"
+    );
+    if (confirmed) {
+      const updated = schedules.filter((_, i) => i !== index);
+      setSchedules(updated);
+    }
   };
 
   const resetAll = () => {
@@ -96,6 +140,9 @@ const PackageScheduleManagement = () => {
     setAmount("");
     setDaySchedules([]);
     setShowForm(false);
+    setIsEditing(false);
+    setEditingIndex(null);
+    setSkipEffect(false);
   };
 
   return (
@@ -113,26 +160,78 @@ const PackageScheduleManagement = () => {
       {schedules.length === 0 ? (
         <p className="text-gray-500">No package schedules added yet.</p>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-6">
           {schedules.map((pkg, idx) => (
-            <div key={idx} className="border rounded p-4 shadow">
-              <h2 className="font-bold text-blue-600 mb-1">{pkg.packageTitle}</h2>
-              <p className="text-sm text-gray-600 mb-1">
-                <strong>Date:</strong> {pkg.fromDate} → {pkg.toDate}
-              </p>
-              <p className="text-sm text-gray-600 mb-2">
-                <strong>Amount:</strong> ₹{pkg.amount}
-              </p>
-              {pkg.days.map((day, i) => (
-                <div key={i} className="mb-2">
-                  <p className="font-semibold text-gray-700">Day {day.day}</p>
-                  {day.schedules.map((s, j) => (
-                    <div key={j} className="text-sm text-gray-600">
-                      {s.time} - {s.title}: {s.description}
+            <div
+              key={idx}
+              className="flex flex-col lg:flex-row items-start gap-6 rounded-2xl border bg-white shadow-md hover:shadow-lg transition-all duration-300 p-6"
+            >
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-blue-700 mb-2">
+                  {pkg.packageTitle}
+                </h2>
+
+                <div className="text-gray-500 text-sm mb-1">
+                  <span className="font-medium">Date:</span> {pkg.fromDate} →{" "}
+                  {pkg.toDate}
+                </div>
+                <div className="text-gray-500 text-sm mb-4">
+                  <span className="font-medium">Amount:</span> ₹{pkg.amount}
+                </div>
+
+                <div className="space-y-4">
+                  {pkg.days.map((day, i) => (
+                    <div key={i}>
+                      <h4 className="text-md font-semibold text-gray-800 mb-2">
+                        Day {day.day}
+                      </h4>
+
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {day.schedules.map((s, j) => (
+                          <div
+                            key={j}
+                            className="bg-gray-50 rounded-lg p-3 text-sm shadow-sm"
+                          >
+                            <div className="font-semibold text-blue-600 mb-1">
+                              {s.time} -{" "}
+                              <span className="text-gray-800">{s.title}</span>
+                            </div>
+                            <div className="text-gray-600">{s.description}</div>
+
+                            {s.photos && s.photos.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {s.photos.map((img, k) => (
+                                  <img
+                                    key={k}
+                                    src={img}
+                                    alt="Schedule"
+                                    className="w-20 h-20 object-cover rounded-lg border"
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
-              ))}
+
+                <div className="flex gap-3 mt-5">
+                  <button
+                    onClick={() => handleEditSchedule(idx)}
+                    className="px-4 py-1.5 text-sm rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 transition"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteSchedule(idx)}
+                    className="px-4 py-1.5 text-sm rounded-lg border border-red-600 text-red-600 hover:bg-red-50 transition"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -142,12 +241,14 @@ const PackageScheduleManagement = () => {
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl relative overflow-y-auto max-h-[90vh]">
             <button
-              onClick={() => setShowForm(false)}
+              onClick={resetAll}
               className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
             >
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-bold mb-4">Add Package Schedule</h2>
+            <h2 className="text-xl font-bold mb-4">
+              {isEditing ? "Edit Package Schedule" : "Add Package Schedule"}
+            </h2>
 
             <select
               value={selectedPackage}
@@ -156,7 +257,9 @@ const PackageScheduleManagement = () => {
             >
               <option value="">Select Package</option>
               {packageTitles.map((pkg, idx) => (
-                <option key={idx} value={pkg}>{pkg}</option>
+                <option key={idx} value={pkg}>
+                  {pkg}
+                </option>
               ))}
             </select>
 
@@ -185,36 +288,73 @@ const PackageScheduleManagement = () => {
 
             {daySchedules.map((dayObj, dayIdx) => (
               <div key={dayIdx} className="mb-6 border rounded p-4">
-                <h4 className="text-lg font-semibold mb-2">Day {dayObj.day}</h4>
-                {["Morning", "Evening", "Night"].map((slot) => (
-                  <div key={slot} className="mb-3">
-                    <h5 className="text-sm font-medium text-blue-600">{slot}</h5>
-                    <input
-                      type="text"
-                      placeholder="Title"
-                      className="w-full border px-2 py-1 rounded mb-1"
-                      onChange={(e) =>
-                        handleDayScheduleInput(dayIdx, slot, "title", e.target.value)
-                      }
-                    />
-                    <textarea
-                      placeholder="Description"
-                      className="w-full border px-2 py-1 rounded mb-1"
-                      rows={2}
-                      onChange={(e) =>
-                        handleDayScheduleInput(dayIdx, slot, "description", e.target.value)
-                      }
-                    />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) =>
-                        handleDaySchedulePhotoUpload(dayIdx, slot, e.target.files)
-                      }
-                    />
-                  </div>
-                ))}
+                <h4 className="text-lg font-semibold mb-2">
+                  Day {dayObj.day}
+                </h4>
+                {["Morning", "Evening", "Night"].map((slot) => {
+                  const schedule =
+                    dayObj.schedules.find((s) => s.time === slot) || {};
+                  return (
+                    <div key={slot} className="mb-3">
+                      <h5 className="text-sm font-medium text-blue-600">
+                        {slot}
+                      </h5>
+                      <input
+                        type="text"
+                        placeholder="Title"
+                        className="w-full border px-2 py-1 rounded mb-1"
+                        onChange={(e) =>
+                          handleDayScheduleInput(
+                            dayIdx,
+                            slot,
+                            "title",
+                            e.target.value
+                          )
+                        }
+                        value={schedule.title || ""}
+                      />
+                      <textarea
+                        placeholder="Description"
+                        className="w-full border px-2 py-1 rounded mb-1"
+                        rows={2}
+                        onChange={(e) =>
+                          handleDayScheduleInput(
+                            dayIdx,
+                            slot,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                        value={schedule.description || ""}
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) =>
+                          handleDaySchedulePhotoUpload(
+                            dayIdx,
+                            slot,
+                            e.target.files
+                          )
+                        }
+                      />
+
+                      {schedule.photos && schedule.photos.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {schedule.photos.map((photo, photoIdx) => (
+                            <img
+                              key={photoIdx}
+                              src={photo}
+                              alt="Uploaded"
+                              className="w-16 h-16 object-cover rounded border"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ))}
 
@@ -222,7 +362,7 @@ const PackageScheduleManagement = () => {
               onClick={handleSubmitPackageSchedule}
               className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
             >
-              Save Package Schedule
+              {isEditing ? "Update Package Schedule" : "Save Package Schedule"}
             </button>
           </div>
         </div>
