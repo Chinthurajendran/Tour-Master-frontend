@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, X, Image, PlaneTakeoff } from "lucide-react";
+import { Plus, X, Pencil, Trash2, PlaneTakeoff } from "lucide-react";
 
 const TourPackageManagement = () => {
   const countryData = [
@@ -12,43 +12,30 @@ const TourPackageManagement = () => {
 
   const [packages, setPackages] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [terms, setTerms] = useState("");
   const [photos, setPhotos] = useState([]);
 
-  const [selectedSourceCountry, setSelectedSourceCountry] = useState("");
-  const [selectedSourceCity, setSelectedSourceCity] = useState("");
-//   const [selectedDestCountry, setSelectedDestCountry] = useState("");
-//   const [selectedDestCity, setSelectedDestCity] = useState("");
-
-  const handleAddPackage = () => {
-    if (!title.trim()) return;
-
-    const newPackage = {
-      title,
-      source: `${selectedSourceCity}, ${selectedSourceCountry}`,
-    //   destination: `${selectedDestCity}, ${selectedDestCountry}`,
-      description,
-      terms,
-      photos,
-    };
-
-    setPackages([...packages, newPackage]);
-    setShowForm(false);
-    resetForm();
-  };
+  const [sourceCountry, setSourceCountry] = useState("");
+  const [sourceCity, setSourceCity] = useState("");
+  const [destCountry, setDestCountry] = useState("");
+  const [destCity, setDestCity] = useState("");
 
   const resetForm = () => {
     setTitle("");
-    setSelectedSourceCountry("");
-    setSelectedSourceCity("");
-    // setSelectedDestCountry("");
-    // setSelectedDestCity("");
     setDescription("");
     setTerms("");
     setPhotos([]);
+    setSourceCountry("");
+    setSourceCity("");
+    setDestCountry("");
+    setDestCity("");
+    setIsEditing(false);
+    setEditIndex(null);
   };
 
   const handlePhotoUpload = (e) => {
@@ -57,8 +44,59 @@ const TourPackageManagement = () => {
     setPhotos(imageUrls);
   };
 
+  const handleAddOrUpdatePackage = () => {
+    if (!title || !sourceCity || !destCity) return;
+
+    const newPackage = {
+      title,
+      source: `${sourceCity}, ${sourceCountry}`,
+      destination: `${destCity}, ${destCountry}`,
+      description,
+      terms,
+      photos,
+    };
+
+    if (isEditing && editIndex !== null) {
+      const updated = [...packages];
+      updated[editIndex] = newPackage;
+      setPackages(updated);
+    } else {
+      setPackages([...packages, newPackage]);
+    }
+
+    setShowForm(false);
+    resetForm();
+  };
+
+  const handleDelete = (index) => {
+    if (window.confirm("Are you sure you want to delete this package?")) {
+      const updated = packages.filter((_, i) => i !== index);
+      setPackages(updated);
+    }
+  };
+
+  const handleEdit = (index) => {
+    const pkg = packages[index];
+    const [srcCity, srcCountry] = pkg.source.split(", ");
+    const [dstCity, dstCountry] = pkg.destination.split(", ");
+
+    setTitle(pkg.title);
+    setDescription(pkg.description);
+    setTerms(pkg.terms);
+    setPhotos(pkg.photos);
+    setSourceCountry(srcCountry);
+    setSourceCity(srcCity);
+    setDestCountry(dstCountry);
+    setDestCity(dstCity);
+
+    setEditIndex(index);
+    setIsEditing(true);
+    setShowForm(true);
+  };
+
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+      {/* Header */}
       <div className="sticky top-0 z-20 bg-gray-50 p-6 shadow flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
@@ -68,7 +106,10 @@ const TourPackageManagement = () => {
           <p className="text-gray-500 text-sm mt-1">Manage travel packages with ease</p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+          }}
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
@@ -76,17 +117,27 @@ const TourPackageManagement = () => {
         </button>
       </div>
 
+      {/* Package List */}
       <div className="flex-1 overflow-y-auto p-6">
         {packages.length === 0 ? (
           <p className="text-gray-400 italic text-center mt-10">No tour packages added yet.</p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {packages.map((pkg, idx) => (
-              <div key={idx} className="bg-white rounded-lg shadow-md p-5 border border-gray-100">
+              <div key={idx} className="bg-white rounded-lg shadow-md p-5 border border-gray-100 relative">
+                <div className="absolute top-3 right-3 flex gap-2">
+                  <button onClick={() => handleEdit(idx)} className="text-blue-600 hover:text-blue-800">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleDelete(idx)} className="text-red-600 hover:text-red-800">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
                 <h2 className="text-xl font-bold text-gray-800 mb-2">{pkg.title}</h2>
                 <p className="text-sm text-gray-600">
-                  <strong>Country:</strong> {pkg.source} <br />
-                  <strong>City:</strong> {pkg.destination}
+                  <strong>From:</strong> {pkg.source} <br />
+                  <strong>To:</strong> {pkg.destination}
                 </p>
                 <p className="text-gray-700 mt-2 text-sm">
                   <strong>Description:</strong> {pkg.description}
@@ -112,6 +163,7 @@ const TourPackageManagement = () => {
         )}
       </div>
 
+      {/* Add/Edit Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg relative">
@@ -122,7 +174,9 @@ const TourPackageManagement = () => {
               <X className="w-5 h-5" />
             </button>
 
-            <h2 className="text-2xl font-semibold mb-5 text-gray-800">Add New Package</h2>
+            <h2 className="text-2xl font-semibold mb-5 text-gray-800">
+              {isEditing ? "Edit Package" : "Add New Package"}
+            </h2>
 
             <input
               type="text"
@@ -132,31 +186,70 @@ const TourPackageManagement = () => {
               className="w-full border px-4 py-2 rounded mb-3"
             />
 
+            {/* Source Country & City */}
             <select
-              value={selectedSourceCountry}
+              value={sourceCountry}
               onChange={(e) => {
-                setSelectedSourceCountry(e.target.value);
-                setSelectedSourceCity("");
+                setSourceCountry(e.target.value);
+                setSourceCity("");
               }}
               className="w-full border px-4 py-2 rounded mb-3"
             >
               <option value="">Select Source Country</option>
               {countryData.map((c, idx) => (
-                <option key={idx} value={c.name}>{c.name}</option>
+                <option key={idx} value={c.name}>
+                  {c.name}
+                </option>
               ))}
             </select>
-
             <select
-              value={selectedSourceCity}
-              onChange={(e) => setSelectedSourceCity(e.target.value)}
+              value={sourceCity}
+              onChange={(e) => setSourceCity(e.target.value)}
               className="w-full border px-4 py-2 rounded mb-3"
-              disabled={!selectedSourceCountry}
+              disabled={!sourceCountry}
             >
               <option value="">Select Source City</option>
-              {countryData.find(c => c.name === selectedSourceCountry)?.cities.map((city, idx) => (
-                <option key={idx} value={city}>{city}</option>
+              {countryData
+                .find((c) => c.name === sourceCountry)
+                ?.cities.map((city, idx) => (
+                  <option key={idx} value={city}>
+                    {city}
+                  </option>
+                ))}
+            </select>
+
+            {/* Destination Country & City */}
+            <select
+              value={destCountry}
+              onChange={(e) => {
+                setDestCountry(e.target.value);
+                setDestCity("");
+              }}
+              className="w-full border px-4 py-2 rounded mb-3"
+            >
+              <option value="">Select Destination Country</option>
+              {countryData.map((c, idx) => (
+                <option key={idx} value={c.name}>
+                  {c.name}
+                </option>
               ))}
             </select>
+            <select
+              value={destCity}
+              onChange={(e) => setDestCity(e.target.value)}
+              className="w-full border px-4 py-2 rounded mb-3"
+              disabled={!destCountry}
+            >
+              <option value="">Select Destination City</option>
+              {countryData
+                .find((c) => c.name === destCountry)
+                ?.cities.map((city, idx) => (
+                  <option key={idx} value={city}>
+                    {city}
+                  </option>
+                ))}
+            </select>
+
             <textarea
               placeholder="Description"
               value={description}
@@ -172,7 +265,9 @@ const TourPackageManagement = () => {
               rows={2}
             />
 
-            <label className="block mb-2 text-sm font-medium text-gray-700">Upload Photos</label>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Upload Photos
+            </label>
             <input
               type="file"
               multiple
@@ -182,10 +277,10 @@ const TourPackageManagement = () => {
             />
 
             <button
-              onClick={handleAddPackage}
+              onClick={handleAddOrUpdatePackage}
               className="bg-green-600 hover:bg-green-700 text-white font-medium w-full py-2 rounded"
             >
-              Add Package
+              {isEditing ? "Update Package" : "Add Package"}
             </button>
           </div>
         </div>
