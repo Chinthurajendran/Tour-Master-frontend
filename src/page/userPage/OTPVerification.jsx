@@ -4,7 +4,7 @@ import axios from "axios"
 import { FiAlertCircle } from "react-icons/fi"
 import { toast } from "react-toastify"
 
-// const baseURL = import.meta.env.VITE_API_LOCAL_URL
+const baseURL = import.meta.env.VITE_API_LOCAL_URL
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState(Array(6).fill(""))
@@ -19,16 +19,18 @@ const OTPVerification = () => {
   const location = useLocation()
   const inputRefs = useRef([])
 
-//   useEffect(() => {
-//     let storedEmail = localStorage.getItem("email")
-//     if (!storedEmail) {
-//       storedEmail = location.state?.email
-//       if (storedEmail) {
-//         localStorage.setItem("email", storedEmail)
-//       }
-//     }
-//     setEmail(storedEmail)
-//   }, [location.state?.email])
+  useEffect(() => {
+    let storedEmail = localStorage.getItem("email")
+    if (!storedEmail) {
+      storedEmail = location.state?.email
+      
+      if (storedEmail) {
+        localStorage.setItem("email", storedEmail)
+      }
+    }
+    setEmail(storedEmail)
+  }, [location.state?.email])
+  console.log(email)
 
   useEffect(() => {
     const countdown = setInterval(() => {
@@ -74,65 +76,66 @@ const OTPVerification = () => {
   }
 
   const handleSubmit = async (e) => {
-    // setLoading(true)
-    // e.preventDefault()
-    // const fullOtp = otp.join("")
-    // if (fullOtp.length !== 6) {
-    //   setFormError("Please enter a valid 6-digit OTP.")
-    //   setLoading(false)
-    //   return
-    // }
+    setLoading(true)
+    e.preventDefault()
+    const fullOtp = otp.join("")
+    if (fullOtp.length !== 6) {
+      setFormError("Please enter a valid 6-digit OTP.")
+      setLoading(false)
+      return
+    }
 
-    // try {
-    //   const res = await axios.post(`${baseURL}/auth/OTPverification`, {
-    //     email,
-    //     OTP: fullOtp,
-    //   })
-    //   if (res.status === 200) {
-    //     toast.success(res.data.message)
-    //     navigate("/SignUpPage")
-    //   }
-    // } catch (error) {
-    //   setLoading(false)
-    //         if (error.response && error.response.data) {
-    //     const detail = error.response.data.detail
-    //     if (Array.isArray(detail)) {
-    //       setFormError(detail.map((err) => err.msg).join(", "))
-    //     } else if (typeof detail === "string") {
-    //       setFormError(detail)
-    //     } else {
-    //       setFormError("Something went wrong. Please try again.")
-    //     }
-    //   }
-    // }
+    try {
+      const res = await axios.post(`${baseURL}/OTPVerification`, {
+        email,
+        otp: fullOtp,
+      })
+      if (res.status === 200) {
+        toast.success(res.data.message)
+        navigate("/SignUpPage")
+      }
+    } catch (error) {
+      console.log(error)
+      setLoading(false)
+      if (error.response && error.response.data) {
+        const detail = error.response.data.detail
+        if (Array.isArray(detail)) {
+          setFormError(detail.map((err) => err.msg).join(", "))
+        } else if (typeof detail === "string") {
+          setFormError(detail)
+        } else {
+          setFormError("Something went wrong. Please try again.")
+        }
+      }
+    }
   }
 
   const handleResendOTP = async () => {
-    // setReloading(true)
-    // try {
-    //   const res = await axios.post(`${baseURL}/auth/ResendOTP`, { email })
-    //   if (res.status === 201) {
-    //     setEmail(res.data.email)
-    //     toast.success(res.data.message)
-    //     setTimer(60)
-    //     setOtp(Array(6).fill(""))
-    //     setResendEnabled(false)
-    //     setFormError("")
-    //     setResetTimer((prev) => !prev)
-    //   }
-    // } catch (error) {
-    //   setReloading(false)
-    //   if (error.response && error.response.data) {
-    //     const detail = error.response.data.detail
-    //     if (Array.isArray(detail)) {
-    //       setFormError(detail.map((err) => err.msg).join(", "))
-    //     } else if (typeof detail === "string") {
-    //       setFormError(detail)
-    //     } else {
-    //       setFormError("Something went wrong. Please try again.")
-    //     }
-    //   }
-    // }
+    setReloading(true)
+    try {
+      const res = await axios.post(`${baseURL}/ResendOTPVerification`, { email })
+      if (res.status === 200) {
+        setEmail(res.data.email)
+        toast.success(res.data.message)
+        setTimer(60)
+        setOtp(Array(6).fill(""))
+        setResendEnabled(false)
+        setFormError("")
+        setResetTimer((prev) => !prev)
+      }
+    } catch (error) {
+      setReloading(false)
+      if (error.response && error.response.data) {
+        const detail = error.response.data.detail
+        if (Array.isArray(detail)) {
+          setFormError(detail.map((err) => err.msg).join(", "))
+        } else if (typeof detail === "string") {
+          setFormError(detail)
+        } else {
+          setFormError("Something went wrong. Please try again.")
+        }
+      }
+    }
   }
 
   return (

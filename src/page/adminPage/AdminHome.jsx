@@ -6,15 +6,15 @@ import { useNavigate } from "react-router-dom"
 
 function AdminHome() {
   const navigate = useNavigate()
-//   const admin_authenticated = useSelector(
-//     (state) => state.adminAuth.isAuthenticated_admin
-//   )
+  const admin_authenticated = useSelector(
+    (state) => state.adminAuth.isAuthenticated_admin
+  )
 
-//   useEffect(() => {
-//     if (!admin_authenticated) {
-//       navigate("/UserLoginPage")
-//     }
-//   }, [admin_authenticated, navigate])
+  useEffect(() => {
+    if (!admin_authenticated) {
+      navigate("/UserLoginPage")
+    }
+  }, [admin_authenticated, navigate])
 
   return (
     <div className="h-screen overflow-hidden flex flex-col">

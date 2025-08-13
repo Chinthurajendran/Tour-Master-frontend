@@ -1,12 +1,12 @@
 import React, { useState } from "react"
-// import.meta.env
+import.meta.env
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { FiAlertCircle } from "react-icons/fi"
 
-// const baseURL = import.meta.env.VITE_API_LOCAL_URL
+const baseURL = import.meta.env.VITE_API_LOCAL_URL
 
 function EmailVerification() {
   const [formError, setFormError] = useState("")
@@ -19,34 +19,34 @@ function EmailVerification() {
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
-    // setIsSubmitted(true)
-    // e.preventDefault()
+    setIsSubmitted(true)
+    e.preventDefault()
 
-    // try {
-    //   const res = await axios.post(`${baseURL}/auth/emailvarfication`, formData)
-    //   if (res.status == 201) {
-    //     navigate("/OTPVerification", {
-    //       state: {
-    //         email: formData.email,
-    //       },
-    //     })
-    //     toast.success(res.data.message)
-    //     return res
-    //   }
-    // } catch (error) {
-    //   setIsSubmitted(false)
+    try {
+      const res = await axios.post(`${baseURL}/verify-email`, formData)
+      if (res.status == 200) {
+        navigate("/OTPVerification", {
+          state: {
+            email: formData.email,
+          },
+        })
+        toast.success(res.data.message)
+        return res
+      }
+    } catch (error) {
+      setIsSubmitted(false)
 
-    //   if (error.response && error.response.data) {
-    //     const detail = error.response.data.detail
-    //     if (Array.isArray(detail)) {
-    //       setFormError(detail.map((err) => err.msg).join(", "))
-    //     } else if (typeof detail === "string") {
-    //       setFormError(detail)
-    //     } else {
-    //       setFormError("An unexpected error occurred. Please try again.")
-    //     }
-    //   }
-    // }
+      if (error.response && error.response.data) {
+        const detail = error.response.data.detail
+        if (Array.isArray(detail)) {
+          setFormError(detail.map((err) => err.msg).join(", "))
+        } else if (typeof detail === "string") {
+          setFormError(detail)
+        } else {
+          setFormError("An unexpected error occurred. Please try again.")
+        }
+      }
+    }
   }
 
   return (

@@ -1,88 +1,108 @@
-import React, { useState } from "react";
-import { Globe2, Plus, X, Pencil, Trash2 } from "lucide-react";
+import React, { useEffect, useState } from "react"
+import { Globe2, Plus, X, Pencil, Trash2 } from "lucide-react"
+import { toast } from "react-toastify"
+import axiosInstance from "../../utils/axiosInstance"
 
 const CountryCityManagement = () => {
-  const [countries, setCountries] = useState([
-    { name: "India", cities: ["Delhi", "Mumbai", "Kolkata"] },
-    { name: "USA", cities: ["New York", "Los Angeles", "Chicago"] },
-  ]);
+  const [countries, setCountries] = useState([])
+  const [newCountry, setNewCountry] = useState("")
+  const [cityInputs, setCityInputs] = useState([""])
+  const [showForm, setShowForm] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editCountryId, setEditCountryId] = useState(null)
 
-  const [newCountry, setNewCountry] = useState("");
-  const [cityInputs, setCityInputs] = useState([""]);
-  const [showForm, setShowForm] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
+  useEffect(() => {
+    fetchCountries()
+  }, [])
+
+  const fetchCountries = async () => {
+    try {
+      const res = await axiosInstance.get("fetch-countries")
+      setCountries(res.data.country)
+    } catch {
+      toast.error("Failed to load countries")
+    }
+  }
 
   const openAddForm = () => {
-    setShowForm(true);
-    setIsEditing(false);
-    setNewCountry("");
-    setCityInputs([""]);
-  };
+    resetForm()
+    setShowForm(true)
+  }
 
-  const openEditForm = (index) => {
-    setIsEditing(true);
-    setEditIndex(index);
-    setShowForm(true);
-    setNewCountry(countries[index].name);
-    setCityInputs([...countries[index].cities]);
-  };
+  const openEditForm = (country) => {
+    setNewCountry(country.name)
+    setEditCountryId(country.id)
+    setCityInputs(country.cities.map((c) => c.name))
+    setIsEditing(true)
+    setShowForm(true)
+  }
+
+  const resetForm = () => {
+    setNewCountry("")
+    setCityInputs([""])
+    setIsEditing(false)
+    setEditCountryId(null)
+    setShowForm(false)
+  }
 
   const handleAddCityField = () => {
-    setCityInputs([...cityInputs, ""]);
-  };
+    setCityInputs([...cityInputs, ""])
+  }
 
   const handleCityChange = (index, value) => {
-    const updated = [...cityInputs];
-    updated[index] = value;
-    setCityInputs(updated);
-  };
+    const updated = [...cityInputs]
+    updated[index] = value
+    setCityInputs(updated)
+  }
 
-  const handleSubmit = () => {
-    const filteredCities = cityInputs.filter((city) => city.trim() !== "");
-    const entry = { name: newCountry.trim(), cities: filteredCities };
+  const handleSubmit = async () => {
+    const trimmedCountry = newCountry.trim()
+    const filteredCities = cityInputs.filter((c) => c.trim() !== "").map((name) => ({ name }))
 
-    if (!entry.name) return;
+    if (!trimmedCountry) return toast.error("Country name is required")
 
-    if (isEditing && editIndex !== null) {
-      const updated = [...countries];
-      updated[editIndex] = entry;
-      setCountries(updated);
-    } else {
-      setCountries([...countries, entry]);
+    const payload = { name: trimmedCountry, cities: filteredCities }
+
+    try {
+      if (isEditing && editCountryId) {
+        await axiosInstance.put(`update-countries/${editCountryId}/`, payload)
+        toast.success("Country updated successfully")
+      } else {
+        await axiosInstance.post("adding-countries", payload)
+        toast.success("Country & cities added successfully!")
+      }
+      fetchCountries()
+      resetForm()
+    } catch {
+      toast.error("Operation failed")
     }
+  }
 
-    setNewCountry("");
-    setCityInputs([""]);
-    setShowForm(false);
-    setIsEditing(false);
-    setEditIndex(null);
-  };
-
-  const handleDelete = (index) => {
-    if (window.confirm("Are you sure you want to delete this country?")) {
-      const updated = countries.filter((_, i) => i !== index);
-      setCountries(updated);
+  const handleDelete = async (id) => {
+    try {
+      await axiosInstance.delete(`delete-countries/${id}/`)
+      fetchCountries()
+      toast.success("Deleted")
+    } catch {
+      toast.error("Failed to delete")
     }
-  };
+  }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-20 bg-gray-50 p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-center">
-          <div className="text-center sm:text-left mb-4 sm:mb-0">
-            <h1 className="text-4xl font-extrabold text-gray-800 flex items-center gap-2">
-              <Globe2 className="w-8 h-8 text-blue-600" />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg p-6 shadow-md border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-extrabold text-gray-800 flex items-center gap-3">
+              <Globe2 className="w-9 h-9 text-blue-600" />
               Country & City Manager
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
-              Efficiently manage countries and their cities.
-            </p>
+            <p className="text-gray-500 mt-1">Manage countries and their cities in style.</p>
           </div>
           <button
             onClick={openAddForm}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-lg flex items-center gap-2 shadow"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all"
           >
             <Plus className="w-5 h-5" />
             Add Country
@@ -90,45 +110,40 @@ const CountryCityManagement = () => {
         </div>
       </div>
 
-      {/* Scrollable Content (scrollbar only appears when needed) */}
+      {/* Countries List */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {countries.map((country, index) => (
+          {countries.map((country) => (
             <div
-              key={index}
-              className="bg-white rounded-lg shadow-md p-5 border border-gray-100"
+              key={country.id}
+              className="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 p-5 hover:shadow-xl transition-all duration-300"
             >
-              <div className="flex justify-between items-start mb-3">
+              <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    {country.name}
-                  </h3>
+                  <h3 className="text-xl font-bold text-gray-900">{country.name}</h3>
                   <p className="text-sm text-gray-500">
-                    {country.cities.length} city
-                    {country.cities.length !== 1 && "ies"}
+                    {country.cities.length} {country.cities.length === 1 ? "city" : "cities"}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button
-                    onClick={() => openEditForm(index)}
-                    className="text-blue-600 hover:text-blue-800"
-                    title="Edit"
+                    onClick={() => openEditForm(country)}
+                    className="text-blue-500 hover:text-blue-700"
                   >
                     <Pencil className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => handleDelete(index)}
-                    className="text-red-600 hover:text-red-800"
-                    title="Delete"
+                    onClick={() => handleDelete(country.id)}
+                    className="text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
-              <ul className="list-disc list-inside text-gray-700 space-y-1 ml-4">
+              <ul className="space-y-1 text-gray-700 text-sm">
                 {country.cities.length > 0 ? (
-                  country.cities.map((city, idx) => <li key={idx}>{city}</li>)
+                  country.cities.map((city, idx) => <li key={idx} className="pl-2">• {city.name}</li>)
                 ) : (
                   <li className="italic text-gray-400">No cities added</li>
                 )}
@@ -138,18 +153,18 @@ const CountryCityManagement = () => {
         </div>
       </div>
 
-      {/* Modal Form */}
+      {/* Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white/95 rounded-2xl shadow-2xl w-full max-w-lg p-6 relative animate-fadeIn">
             <button
-              onClick={() => setShowForm(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-red-500"
+              onClick={resetForm}
+              className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </button>
 
-            <h2 className="text-2xl font-semibold mb-5 text-gray-800">
+            <h2 className="text-2xl font-bold mb-5 text-gray-800">
               {isEditing ? "Edit Country" : "Add New Country"}
             </h2>
 
@@ -158,10 +173,10 @@ const CountryCityManagement = () => {
               placeholder="Country name"
               value={newCountry}
               onChange={(e) => setNewCountry(e.target.value)}
-              className="w-full border border-gray-300 px-4 py-2 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full border border-gray-300 px-4 py-2 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
 
-            <h3 className="text-gray-700 font-medium mb-2">Cities</h3>
+            <h3 className="text-gray-700 font-semibold mb-2">Cities</h3>
             {cityInputs.map((city, idx) => (
               <input
                 key={idx}
@@ -169,7 +184,7 @@ const CountryCityManagement = () => {
                 placeholder={`City ${idx + 1}`}
                 value={city}
                 onChange={(e) => handleCityChange(idx, e.target.value)}
-                className="w-full border border-gray-300 px-4 py-2 rounded-lg mb-2 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                className="w-full border border-gray-300 px-4 py-2 rounded-xl mb-2 focus:outline-none focus:ring-1 focus:ring-blue-300"
               />
             ))}
 
@@ -182,7 +197,7 @@ const CountryCityManagement = () => {
 
             <button
               onClick={handleSubmit}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 rounded-lg mt-2 transition-all"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-xl transition-all"
             >
               {isEditing ? "Update Country" : "Add Country"}
             </button>
@@ -190,7 +205,7 @@ const CountryCityManagement = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default CountryCityManagement;
+export default CountryCityManagement

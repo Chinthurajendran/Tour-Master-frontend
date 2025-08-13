@@ -20,56 +20,56 @@ function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-//   useEffect(() => {
-//     const storedEmail = localStorage.getItem("email")
-//     if (storedEmail) {
-//       setFormData((prev) => ({ ...prev, email: storedEmail }))
-//     }
-//   }, [])
+  useEffect(() => {
+    const storedEmail = localStorage.getItem("email")
+    if (storedEmail) {
+      setFormData((prev) => ({ ...prev, email: storedEmail }))
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
-    // e.preventDefault()
-    // setFormError("")
+    e.preventDefault()
+    setFormError("")
 
-    // const usernameRegex = /^[A-Za-z\s]+$/
-    // if (!usernameRegex.test(formData.username)) {
-    //   setFormError("Username should only contain letters.")
-    //   return
-    // }
+    const usernameRegex = /^[A-Za-z\s]+$/
+    if (!usernameRegex.test(formData.username)) {
+      setFormError("Username should only contain letters.")
+      return
+    }
 
-    // const passwordRegex =
-    //   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
-    // if (!passwordRegex.test(formData.password)) {
-    //   setFormError(
-    //     "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
-    //   )
-    //   return
-    // }
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
+    if (!passwordRegex.test(formData.password)) {
+      setFormError(
+        "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
+      )
+      return
+    }
 
-    // if (formData.password !== formData.confirm_password) {
-    //   setFormError("Passwords do not match.")
-    //   return
-    // }
+    if (formData.password !== formData.confirm_password) {
+      setFormError("Passwords do not match.")
+      return
+    }
 
-    // try {
-    //   const res = await axios.post(`${baseURL}/auth/signup`, formData)
-    //   if (res.status === 201) {
-    //     localStorage.removeItem("email")
-    //     toast.success(res.data.message)
-    //     navigate("/UserLoginPage")
-    //   }
-    // } catch (error) {
-    //   if (error.response && error.response.data) {
-    //     const detail = error.response.data.detail
-    //     if (Array.isArray(detail)) {
-    //       setFormError(detail.map((err) => err.msg).join(", "))
-    //     } else if (typeof detail === "string") {
-    //       setFormError(detail)
-    //     } else {
-    //       setFormError("Something went wrong. Please try again.")
-    //     }
-    //   }
-    // }
+    try {
+      const res = await axios.post(`${baseURL}/Register`, formData)
+      if (res.status === 201) {
+        localStorage.removeItem("email")
+        toast.success(res.data.message)
+        navigate("/UserLoginPage")
+      }
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const detail = error.response.data.detail
+        if (Array.isArray(detail)) {
+          setFormError(detail.map((err) => err.msg).join(", "))
+        } else if (typeof detail === "string") {
+          setFormError(detail)
+        } else {
+          setFormError("Something went wrong. Please try again.")
+        }
+      }
+    }
   }
 
   return (

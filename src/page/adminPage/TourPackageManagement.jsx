@@ -1,71 +1,96 @@
-import React, { useState } from "react";
-import { Plus, X, Pencil, Trash2, PlaneTakeoff } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Plus, X, Pencil, Trash2, PlaneTakeoff, Upload } from "lucide-react";
+import axiosInstance from "../../utils/axiosInstance";
+import { toast } from "react-toastify";
 
 const TourPackageManagement = () => {
-  const countryData = [
-    { name: "India", cities: ["Delhi", "Mumbai", "Kolkata"] },
-    { name: "USA", cities: ["New York", "Los Angeles", "Chicago"] },
-    { name: "France", cities: ["Paris", "Lyon", "Marseille"] },
-    { name: "Japan", cities: ["Tokyo", "Kyoto", "Osaka"] },
-    { name: "Australia", cities: ["Sydney", "Melbourne", "Brisbane"] },
-  ];
-
+  const [countries, setCountries] = useState([]);
   const [packages, setPackages] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [terms, setTerms] = useState("");
-  const [photos, setPhotos] = useState([]);
+  const [formData, setFormData] = useState({
+    title: "",
+    source: "",
+    destination: "",
+    description: "",
+    terms: "",
+    photos: [],
+  });
 
-  const [sourceCountry, setSourceCountry] = useState("");
-  const [sourceCity, setSourceCity] = useState("");
-  const [destCountry, setDestCountry] = useState("");
-  const [destCity, setDestCity] = useState("");
+  const [previewPhotos, setPreviewPhotos] = useState([]);
+
+  useEffect(() => {
+    fetchCountries();
+    fetchPackages();
+  }, []);
+
+  const fetchCountries = async () => {
+    try {
+      const res = await axiosInstance.get("fetch-countries");
+      setCountries(res.data.country);
+    } catch {
+      toast.error("Failed to load countries");
+    }
+  };
+
+  const fetchPackages = async () => {
+    try {
+      const res = await axiosInstance.get("admin-tourpackages");
+      setPackages(res.data.Package);
+    } catch {
+      toast.error("Failed to load packages");
+    }
+  };
 
   const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setTerms("");
-    setPhotos([]);
-    setSourceCountry("");
-    setSourceCity("");
-    setDestCountry("");
-    setDestCity("");
+    setFormData({
+      title: "",
+      source: "",
+      destination: "",
+      description: "",
+      terms: "",
+      photos: [],
+    });
+    setPreviewPhotos([]);
     setIsEditing(false);
     setEditIndex(null);
   };
 
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
-    const imageUrls = files.map((file) => URL.createObjectURL(file));
-    setPhotos(imageUrls);
+    setFormData((prev) => ({ ...prev, photos: files }));
+    setPreviewPhotos(files.map((file) => URL.createObjectURL(file)));
   };
 
-  const handleAddOrUpdatePackage = () => {
-    if (!title || !sourceCity || !destCity) return;
-
-    const newPackage = {
-      title,
-      source: `${sourceCity}, ${sourceCountry}`,
-      destination: `${destCity}, ${destCountry}`,
-      description,
-      terms,
-      photos,
-    };
-
-    if (isEditing && editIndex !== null) {
-      const updated = [...packages];
-      updated[editIndex] = newPackage;
-      setPackages(updated);
-    } else {
-      setPackages([...packages, newPackage]);
+  const handleAddOrUpdatePackage = async () => {
+    if (!formData.title || !formData.source || !formData.destination) {
+      toast.error("Please fill in all required fields");
+      return;
     }
 
-    setShowForm(false);
-    resetForm();
+    const formDataToSend = new FormData();
+    formDataToSend.append("packagetitle", formData.title);
+    formDataToSend.append("source_country_city", formData.source);
+    formDataToSend.append("destination_country_city", formData.destination);
+    formDataToSend.append("description", formData.description);
+    formDataToSend.append("terms_and_conditions", formData.terms);
+    for (let file of formData.photos) {
+      formDataToSend.append("photos", file);
+    }
+
+    try {
+      await axiosInstance.post("Add-TourPackage", formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success(isEditing ? "Package updated!" : "Package added!");
+      setShowForm(false);
+      resetForm();
+      fetchPackages();
+    } catch {
+      toast.error("Failed to save package");
+    }
   };
 
   const handleDelete = (index) => {
@@ -77,40 +102,39 @@ const TourPackageManagement = () => {
 
   const handleEdit = (index) => {
     const pkg = packages[index];
-    const [srcCity, srcCountry] = pkg.source.split(", ");
-    const [dstCity, dstCountry] = pkg.destination.split(", ");
-
-    setTitle(pkg.title);
-    setDescription(pkg.description);
-    setTerms(pkg.terms);
-    setPhotos(pkg.photos);
-    setSourceCountry(srcCountry);
-    setSourceCity(srcCity);
-    setDestCountry(dstCountry);
-    setDestCity(dstCity);
-
+    setFormData({
+      title: pkg.packagetitle,
+      source: pkg.source_country_city,
+      destination: pkg.destination_country_city,
+      description: pkg.description,
+      terms: pkg.terms_and_conditions,
+      photos: [],
+    });
+    setPreviewPhotos(pkg.photos.map((p) => `http://127.0.0.1:8000${p.image}`));
     setEditIndex(index);
     setIsEditing(true);
     setShowForm(true);
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-gray-50 p-6 shadow flex justify-between items-center">
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-200 p-6 flex justify-between items-center shadow-sm">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-            <PlaneTakeoff className="w-6 h-6 text-blue-600" />
+            <PlaneTakeoff className="w-7 h-7 text-blue-600" />
             Tour Packages
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Manage travel packages with ease</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Create, edit, and manage travel packages
+          </p>
         </div>
         <button
           onClick={() => {
             resetForm();
             setShowForm(true);
           }}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2"
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 transition text-white font-medium px-5 py-2.5 rounded-full flex items-center gap-2 shadow-md"
         >
           <Plus className="w-5 h-5" />
           Add Package
@@ -120,39 +144,48 @@ const TourPackageManagement = () => {
       {/* Package List */}
       <div className="flex-1 overflow-y-auto p-6">
         {packages.length === 0 ? (
-          <p className="text-gray-400 italic text-center mt-10">No tour packages added yet.</p>
+          <p className="text-gray-400 italic text-center mt-10">
+            No tour packages added yet.
+          </p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {packages.map((pkg, idx) => (
-              <div key={idx} className="bg-white rounded-lg shadow-md p-5 border border-gray-100 relative">
+              <div
+                key={idx}
+                className="bg-white rounded-xl shadow-md p-5 border border-gray-100 relative hover:shadow-lg transition transform hover:-translate-y-1"
+              >
                 <div className="absolute top-3 right-3 flex gap-2">
-                  <button onClick={() => handleEdit(idx)} className="text-blue-600 hover:text-blue-800">
+                  <button
+                    onClick={() => handleEdit(idx)}
+                    className="p-1 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                  >
                     <Pencil className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(idx)} className="text-red-600 hover:text-red-800">
+                  <button
+                    onClick={() => handleDelete(idx)}
+                    className="p-1 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-
-                <h2 className="text-xl font-bold text-gray-800 mb-2">{pkg.title}</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">
+                  {pkg.packagetitle}
+                </h2>
                 <p className="text-sm text-gray-600">
-                  <strong>From:</strong> {pkg.source} <br />
-                  <strong>To:</strong> {pkg.destination}
+                  <strong>From:</strong> {pkg.source_country_city} <br />
+                  <strong>To:</strong> {pkg.destination_country_city}
                 </p>
-                <p className="text-gray-700 mt-2 text-sm">
-                  <strong>Description:</strong> {pkg.description}
-                </p>
-                <p className="text-gray-700 mt-2 text-sm">
-                  <strong>Terms:</strong> {pkg.terms}
+                <p className="text-gray-700 mt-3 text-sm leading-relaxed">
+                  {pkg.description}
                 </p>
                 {pkg.photos.length > 0 && (
-                  <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="mt-4 grid grid-cols-3 gap-2">
                     {pkg.photos.map((photo, i) => (
                       <img
                         key={i}
-                        src={photo}
-                        alt={`Package ${i}`}
-                        className="rounded object-cover h-24 w-full"
+                        src={`http://127.0.0.1:8000${photo.image}`}
+                        alt=""
+                        className="rounded-lg object-cover h-24 w-full"
                       />
                     ))}
                   </div>
@@ -165,120 +198,188 @@ const TourPackageManagement = () => {
 
       {/* Add/Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white/90 rounded-2xl shadow-2xl w-full max-w-lg relative p-6 animate-fadeIn">
             <button
               onClick={() => setShowForm(false)}
               className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </button>
-
-            <h2 className="text-2xl font-semibold mb-5 text-gray-800">
+            <h2 className="text-2xl font-semibold mb-6 text-gray-800">
               {isEditing ? "Edit Package" : "Add New Package"}
             </h2>
 
+            {/* Title */}
+            <label className="block text-sm font-medium mb-1">Title</label>
             <input
               type="text"
-              placeholder="Package Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full border px-4 py-2 rounded mb-3"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              className="w-full border px-4 py-2 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500"
             />
 
-            {/* Source Country & City */}
-            <select
-              value={sourceCountry}
-              onChange={(e) => {
-                setSourceCountry(e.target.value);
-                setSourceCity("");
-              }}
-              className="w-full border px-4 py-2 rounded mb-3"
-            >
-              <option value="">Select Source Country</option>
-              {countryData.map((c, idx) => (
-                <option key={idx} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={sourceCity}
-              onChange={(e) => setSourceCity(e.target.value)}
-              className="w-full border px-4 py-2 rounded mb-3"
-              disabled={!sourceCountry}
-            >
-              <option value="">Select Source City</option>
-              {countryData
-                .find((c) => c.name === sourceCountry)
-                ?.cities.map((city, idx) => (
-                  <option key={idx} value={city}>
-                    {city}
-                  </option>
-                ))}
-            </select>
+            {/* Country & City */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Source Country
+                </label>
+                <select
+                  value={formData.source.split(" - ")[0] || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, source: `${e.target.value} - ` })
+                  }
+                  className="w-full border px-3 py-2 rounded-lg"
+                >
+                  <option value="">Select</option>
+                  {countries.map((c, idx) => (
+                    <option key={idx} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Source City
+                </label>
+                <select
+                  value={formData.source.split(" - ")[1] || ""}
+                  onChange={(e) => {
+                    const country = formData.source.split(" - ")[0];
+                    setFormData({
+                      ...formData,
+                      source: `${country} - ${e.target.value}`,
+                    });
+                  }}
+                  className="w-full border px-3 py-2 rounded-lg"
+                  disabled={!formData.source}
+                >
+                  <option value="">Select</option>
+                  {countries
+                    .find((c) => c.name === formData.source.split(" - ")[0])
+                    ?.cities.map((city, idx) => (
+                      <option key={idx} value={city.name}>
+                        {city.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
 
-            {/* Destination Country & City */}
-            <select
-              value={destCountry}
-              onChange={(e) => {
-                setDestCountry(e.target.value);
-                setDestCity("");
-              }}
-              className="w-full border px-4 py-2 rounded mb-3"
-            >
-              <option value="">Select Destination Country</option>
-              {countryData.map((c, idx) => (
-                <option key={idx} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={destCity}
-              onChange={(e) => setDestCity(e.target.value)}
-              className="w-full border px-4 py-2 rounded mb-3"
-              disabled={!destCountry}
-            >
-              <option value="">Select Destination City</option>
-              {countryData
-                .find((c) => c.name === destCountry)
-                ?.cities.map((city, idx) => (
-                  <option key={idx} value={city}>
-                    {city}
-                  </option>
-                ))}
-            </select>
+            {/* Destination */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Destination Country
+                </label>
+                <select
+                  value={formData.destination.split(" - ")[0] || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      destination: `${e.target.value} - `,
+                    })
+                  }
+                  className="w-full border px-3 py-2 rounded-lg"
+                >
+                  <option value="">Select</option>
+                  {countries.map((c, idx) => (
+                    <option key={idx} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Destination City
+                </label>
+                <select
+                  value={formData.destination.split(" - ")[1] || ""}
+                  onChange={(e) => {
+                    const country = formData.destination.split(" - ")[0];
+                    setFormData({
+                      ...formData,
+                      destination: `${country} - ${e.target.value}`,
+                    });
+                  }}
+                  className="w-full border px-3 py-2 rounded-lg"
+                  disabled={!formData.destination}
+                >
+                  <option value="">Select</option>
+                  {countries
+                    .find(
+                      (c) => c.name === formData.destination.split(" - ")[0]
+                    )
+                    ?.cities.map((city, idx) => (
+                      <option key={idx} value={city.name}>
+                        {city.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
 
+            {/* Description */}
+            <label className="block text-sm font-medium mb-1">Description</label>
             <textarea
-              placeholder="Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full border px-4 py-2 rounded mb-3"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              className="w-full border px-4 py-2 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500"
               rows={3}
             />
+
+            {/* Terms */}
+            <label className="block text-sm font-medium mb-1">
+              Terms & Conditions
+            </label>
             <textarea
-              placeholder="Terms and Conditions"
-              value={terms}
-              onChange={(e) => setTerms(e.target.value)}
-              className="w-full border px-4 py-2 rounded mb-3"
+              value={formData.terms}
+              onChange={(e) =>
+                setFormData({ ...formData, terms: e.target.value })
+              }
+              className="w-full border px-4 py-2 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500"
               rows={2}
             />
 
-            <label className="block mb-2 text-sm font-medium text-gray-700">
-              Upload Photos
-            </label>
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              className="mb-4"
-            />
+            {/* Upload */}
+            <label className="block text-sm font-medium mb-1">Photos</label>
+            <div className="flex items-center gap-3 mb-4">
+              <label className="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                <Upload className="w-4 h-4" />
+                <span>Upload</span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+              </label>
+              {previewPhotos.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto">
+                  {previewPhotos.map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt=""
+                      className="h-14 w-14 object-cover rounded-lg"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
 
+            {/* Submit */}
             <button
               onClick={handleAddOrUpdatePackage}
-              className="bg-green-600 hover:bg-green-700 text-white font-medium w-full py-2 rounded"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:opacity-90 text-white font-medium py-2 rounded-full"
             >
               {isEditing ? "Update Package" : "Add Package"}
             </button>
