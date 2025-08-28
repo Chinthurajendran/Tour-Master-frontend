@@ -30,7 +30,6 @@ const OTPVerification = () => {
     }
     setEmail(storedEmail)
   }, [location.state?.email])
-  console.log(email)
 
   useEffect(() => {
     const countdown = setInterval(() => {

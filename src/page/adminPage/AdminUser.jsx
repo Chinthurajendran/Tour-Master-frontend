@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
-import { Edit3, Trash2, UserPlus, User } from "lucide-react"
+import { User } from "lucide-react"
 import gallery from "../../assets/gallery.png"
-import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import Swal from "sweetalert2"
@@ -9,8 +8,6 @@ import axiosInstance from "../../utils/axiosInstance"
 
 function AdminUser() {
   const [users, setUsers] = useState([])
-  const navigate = useNavigate()
-
   useEffect(() => {
     fetchUsers()
   }, [])
@@ -27,63 +24,26 @@ function AdminUser() {
     }
   }
 
-  const handleDelete = async (userId) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "This action cannot be undone!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete user",
-    })
-
-    if (result.isConfirmed) {
-      try {
-        const response = await axiosInstance.put(`user_delete/${userId}`)
-        if (response.status === 200) {
-          Swal.fire("Deleted!", "User has been removed.", "success")
-          fetchUsers()
-        }
-      } catch (error) {
-        console.error("Delete failed:", error)
-        toast.error("Failed to delete user")
-      }
-    }
-  }
-
-  const handleEdit = (userId) => {
-    navigate(`/AdminUserEdit`, { state: { userId } })
-  }
-
-  const handleCreateUser = () => {
-    navigate(`/AdminUserCreate`)
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="flex flex-col bg-gradient-to-br text-white">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-            <User className="w-7 h-7 text-blue-600" />
-            User Management
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Manage platform users and their access.
-          </p>
+
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg p-6 mb-7 shadow-md border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-extrabold text-gray-800 flex items-center gap-3">
+              <User className="w-9 h-9 text-blue-600" />
+              User Management
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Manage platform users and their access.
+            </p>
+          </div>
         </div>
-        <button
-          onClick={handleCreateUser}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm"
-        >
-          <UserPlus className="w-5 h-5" />
-          New User
-        </button>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto bg-white shadow-lg rounded-xl border border-gray-200">
+      <div className="overflow-x-auto bg-white shadow-lg rounded-xl border border-gray-200 ">
         <table className="min-w-full table-auto">
           <thead className="bg-gradient-to-r from-blue-50 to-blue-100 text-gray-700 uppercase text-sm">
             <tr>
@@ -91,7 +51,6 @@ function AdminUser() {
               <th className="px-6 py-4 text-left">Username</th>
               <th className="px-6 py-4 text-left">Email</th>
               <th className="px-6 py-4 text-left">Status</th>
-              <th className="px-6 py-4 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -122,22 +81,6 @@ function AdminUser() {
                     >
                       {user.login_status ? "Active" : "Inactive"}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-center flex justify-center gap-3">
-                    <button
-                      onClick={() => handleEdit(user.id)}
-                      className="p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
-                      title="Edit"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="p-2 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </td>
                 </tr>
               ))

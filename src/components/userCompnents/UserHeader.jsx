@@ -3,7 +3,8 @@ import { UserCircle } from "lucide-react"
 import locationLogo from "../../assets/location.png"
 import { useSelector } from "react-redux"
 import axiosInstance from "../../utils/axiosInstance"
-import { logout } from "../../store/slices/UserToken"
+import { logout } from "../../store/slices/userAuthentication"
+import { clearUserTokens } from "../../store/slices/UserToken"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import { useDispatch } from "react-redux"
@@ -18,6 +19,7 @@ const UserHeader = () => {
       const res = await axiosInstance.put(`user_logout`)
       if (res.status === 200) {
         dispatch(logout())
+        dispatch(clearUserTokens())
         navigate("/UserLoginPage")
         toast.success(res.data.message)
       }

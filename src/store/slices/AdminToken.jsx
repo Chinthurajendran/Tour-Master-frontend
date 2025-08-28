@@ -1,32 +1,23 @@
 import { createSlice } from "@reduxjs/toolkit"
 import { act } from "react"
 
-export const adminSlice = createSlice({
+export const adminTokenSlice = createSlice({
   name: "authentication_admin",
   initialState: {
-    admin_role:null,
-    admin_username: null,
     admin_access_token: null,
     admin_refresh_token: null,
-    isAuthenticated_admin: false,
   },
   reducers: {
-    admin_login: (state, action) => {
-      state.admin_role = action.payload.admin_role
-      state.admin_username = action.payload.admin_username
+    setAdminTokens: (state, action) => {
       state.admin_access_token = action.payload.admin_access_token
       state.admin_refresh_token = action.payload.admin_refresh_token
-      state.isAuthenticated_admin = true
     },
-    admin_logout: (state) => {
-      state.admin_role = null
-      state.admin_username = null
+    clearAdminTokens: (state) => {
       state.admin_access_token = null
       state.admin_refresh_token = null
-      state.isAuthenticated_admin = false
     },
   },
 })
 
-export const { admin_login, admin_logout } = adminSlice.actions
-export default adminSlice.reducer
+export const { setAdminTokens, clearAdminTokens } = adminTokenSlice.actions
+export default adminTokenSlice.reducer

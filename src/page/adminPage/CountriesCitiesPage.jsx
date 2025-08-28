@@ -89,7 +89,7 @@ const CountryCityManagement = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex flex-col bg-gradient-to-br  text-white">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg p-6 shadow-md border-b border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -173,7 +173,7 @@ const CountryCityManagement = () => {
               placeholder="Country name"
               value={newCountry}
               onChange={(e) => setNewCountry(e.target.value)}
-              className="w-full border border-gray-300 px-4 py-2 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full border border-gray-300 px-4 py-2 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400 text-black"
             />
 
             <h3 className="text-gray-700 font-semibold mb-2">Cities</h3>
@@ -184,7 +184,7 @@ const CountryCityManagement = () => {
                 placeholder={`City ${idx + 1}`}
                 value={city}
                 onChange={(e) => handleCityChange(idx, e.target.value)}
-                className="w-full border border-gray-300 px-4 py-2 rounded-xl mb-2 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                className="w-full border border-gray-300 px-4 py-2 rounded-xl mb-2 focus:outline-none focus:ring-1 focus:ring-blue-300  text-black"
               />
             ))}
 

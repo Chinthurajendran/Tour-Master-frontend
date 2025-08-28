@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { Plus, X, Pencil, Trash2, PlaneTakeoff, Upload } from "lucide-react";
-import axiosInstance from "../../utils/axiosInstance";
-import { toast } from "react-toastify";
+import React, { useEffect, useState } from "react"
+import { Plus, X, Pencil, Trash2, PlaneTakeoff, Upload } from "lucide-react"
+import axiosInstance from "../../utils/axiosInstance"
+import { toast } from "react-toastify"
 
 const TourPackageManagement = () => {
-  const [countries, setCountries] = useState([]);
-  const [packages, setPackages] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
+  const [countries, setCountries] = useState([])
+  const [packages, setPackages] = useState([])
+  const [showForm, setShowForm] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editIndex, setEditIndex] = useState(null)
 
   const [formData, setFormData] = useState({
     title: "",
@@ -17,32 +17,32 @@ const TourPackageManagement = () => {
     description: "",
     terms: "",
     photos: [],
-  });
+  })
 
-  const [previewPhotos, setPreviewPhotos] = useState([]);
+  const [previewPhotos, setPreviewPhotos] = useState([])
 
   useEffect(() => {
-    fetchCountries();
-    fetchPackages();
-  }, []);
+    fetchCountries()
+    fetchPackages()
+  }, [])
 
   const fetchCountries = async () => {
     try {
-      const res = await axiosInstance.get("fetch-countries");
-      setCountries(res.data.country);
+      const res = await axiosInstance.get("fetch-countries")
+      setCountries(res.data.country)
     } catch {
-      toast.error("Failed to load countries");
+      toast.error("Failed to load countries")
     }
-  };
+  }
 
   const fetchPackages = async () => {
     try {
-      const res = await axiosInstance.get("admin-tourpackages");
-      setPackages(res.data.Package);
+      const res = await axiosInstance.get("admin-tourpackages")
+      setPackages(res.data.Package)
     } catch {
-      toast.error("Failed to load packages");
+      toast.error("Failed to load packages")
     }
-  };
+  }
 
   const resetForm = () => {
     setFormData({
@@ -52,56 +52,56 @@ const TourPackageManagement = () => {
       description: "",
       terms: "",
       photos: [],
-    });
-    setPreviewPhotos([]);
-    setIsEditing(false);
-    setEditIndex(null);
-  };
+    })
+    setPreviewPhotos([])
+    setIsEditing(false)
+    setEditIndex(null)
+  }
 
   const handlePhotoUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setFormData((prev) => ({ ...prev, photos: files }));
-    setPreviewPhotos(files.map((file) => URL.createObjectURL(file)));
-  };
+    const files = Array.from(e.target.files)
+    setFormData((prev) => ({ ...prev, photos: files }))
+    setPreviewPhotos(files.map((file) => URL.createObjectURL(file)))
+  }
 
   const handleAddOrUpdatePackage = async () => {
     if (!formData.title || !formData.source || !formData.destination) {
-      toast.error("Please fill in all required fields");
-      return;
+      toast.error("Please fill in all required fields")
+      return
     }
 
-    const formDataToSend = new FormData();
-    formDataToSend.append("packagetitle", formData.title);
-    formDataToSend.append("source_country_city", formData.source);
-    formDataToSend.append("destination_country_city", formData.destination);
-    formDataToSend.append("description", formData.description);
-    formDataToSend.append("terms_and_conditions", formData.terms);
+    const formDataToSend = new FormData()
+    formDataToSend.append("packagetitle", formData.title)
+    formDataToSend.append("source_country_city", formData.source)
+    formDataToSend.append("destination_country_city", formData.destination)
+    formDataToSend.append("description", formData.description)
+    formDataToSend.append("terms_and_conditions", formData.terms)
     for (let file of formData.photos) {
-      formDataToSend.append("photos", file);
+      formDataToSend.append("photos", file)
     }
 
     try {
       await axiosInstance.post("Add-TourPackage", formDataToSend, {
         headers: { "Content-Type": "multipart/form-data" },
-      });
-      toast.success(isEditing ? "Package updated!" : "Package added!");
-      setShowForm(false);
-      resetForm();
-      fetchPackages();
+      })
+      toast.success(isEditing ? "Package updated!" : "Package added!")
+      setShowForm(false)
+      resetForm()
+      fetchPackages()
     } catch {
-      toast.error("Failed to save package");
+      toast.error("Failed to save package")
     }
-  };
+  }
 
   const handleDelete = (index) => {
     if (window.confirm("Are you sure you want to delete this package?")) {
-      const updated = packages.filter((_, i) => i !== index);
-      setPackages(updated);
+      const updated = packages.filter((_, i) => i !== index)
+      setPackages(updated)
     }
-  };
+  }
 
   const handleEdit = (index) => {
-    const pkg = packages[index];
+    const pkg = packages[index]
     setFormData({
       title: pkg.packagetitle,
       source: pkg.source_country_city,
@@ -109,36 +109,39 @@ const TourPackageManagement = () => {
       description: pkg.description,
       terms: pkg.terms_and_conditions,
       photos: [],
-    });
-    setPreviewPhotos(pkg.photos.map((p) => `http://127.0.0.1:8000${p.image}`));
-    setEditIndex(index);
-    setIsEditing(true);
-    setShowForm(true);
-  };
+    })
+    setPreviewPhotos(pkg.photos.map((p) => `http://127.0.0.1:8000${p.image}`))
+    setEditIndex(index)
+    setIsEditing(true)
+    setShowForm(true)
+  }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex flex-col bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-200 p-6 flex justify-between items-center shadow-sm">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-            <PlaneTakeoff className="w-7 h-7 text-blue-600" />
-            Tour Packages
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Create, edit, and manage travel packages
-          </p>
+
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg p-6 shadow-md border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-extrabold text-gray-800 flex items-center gap-3">
+              <PlaneTakeoff className="w-9 h-9 text-blue-600" />
+              Tour Packages
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Create, edit, and manage travel packages.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              resetForm()
+              setShowForm(true)
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            Add Package
+          </button>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowForm(true);
-          }}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:opacity-90 transition text-white font-medium px-5 py-2.5 rounded-full flex items-center gap-2 shadow-md"
-        >
-          <Plus className="w-5 h-5" />
-          Add Package
-        </button>
       </div>
 
       {/* Package List */}
@@ -249,11 +252,11 @@ const TourPackageManagement = () => {
                 <select
                   value={formData.source.split(" - ")[1] || ""}
                   onChange={(e) => {
-                    const country = formData.source.split(" - ")[0];
+                    const country = formData.source.split(" - ")[0]
                     setFormData({
                       ...formData,
                       source: `${country} - ${e.target.value}`,
-                    });
+                    })
                   }}
                   className="w-full border px-3 py-2 rounded-lg"
                   disabled={!formData.source}
@@ -301,11 +304,11 @@ const TourPackageManagement = () => {
                 <select
                   value={formData.destination.split(" - ")[1] || ""}
                   onChange={(e) => {
-                    const country = formData.destination.split(" - ")[0];
+                    const country = formData.destination.split(" - ")[0]
                     setFormData({
                       ...formData,
                       destination: `${country} - ${e.target.value}`,
-                    });
+                    })
                   }}
                   className="w-full border px-3 py-2 rounded-lg"
                   disabled={!formData.destination}
@@ -325,7 +328,9 @@ const TourPackageManagement = () => {
             </div>
 
             {/* Description */}
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
             <textarea
               value={formData.description}
               onChange={(e) =>
@@ -387,7 +392,7 @@ const TourPackageManagement = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default TourPackageManagement;
+export default TourPackageManagement

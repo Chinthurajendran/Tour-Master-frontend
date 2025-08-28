@@ -10,7 +10,8 @@ import {
   ImageIcon, // 📸 Banner Carousel
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
-import { admin_logout } from "../../store/slices/AdminToken";
+import { admin_logout } from "../../store/slices/adminAuthentication";
+import { clearAdminTokens } from "../../store/slices/AdminToken";
 import axiosInstance from "../../utils/axiosInstance";
 import { toast } from "react-toastify";
 
@@ -24,6 +25,7 @@ function AdminSidebar() {
       const res = await axiosInstance.put(`admin_logout`)
       if (res.status === 200) {
         dispatch(admin_logout())
+        dispatch(clearAdminTokens())
         navigate("/UserLoginPage")
         toast.success(res.data.message)
       }

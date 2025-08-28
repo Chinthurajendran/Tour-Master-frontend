@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
 import axios from "axios"
 import { toast } from "react-toastify"
-import { FiAlertCircle } from "react-icons/fi"                                                                                
+import { FiAlertCircle } from "react-icons/fi"
 import { jwtDecode } from "jwt-decode"
-import { login } from "../../store/slices/UserToken"
-import { admin_login } from "../../store/slices/AdminToken"
+import { login } from "../../store/slices/userAuthentication"
+import { setUserTokens } from "../../store/slices/UserToken"
+import { admin_login } from "../../store/slices/adminAuthentication"
+import { setAdminTokens } from "../../store/slices/AdminToken"
 import.meta.env
 
 const baseURL = import.meta.env.VITE_API_LOCAL_URL
@@ -18,8 +20,8 @@ function UserLoginPage() {
     password: "",
   })
 
-  const navigate = useNavigate()                                                                                                    
-  const dispatch = useDispatch()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
   const authState = useSelector((state) => state.userAuth.isAuthenticated)
   const admin_authenticated = useSelector(
     (state) => state.adminAuth.isAuthenticated_admin
@@ -28,7 +30,7 @@ function UserLoginPage() {
   useEffect(() => {
     if (admin_authenticated) {
       navigate("/AdminHome/AdminUser")
-    } else if (authState ) {
+    } else if (authState) {
       navigate("/")
     } else {
       navigate("/UserLoginPage")
@@ -42,16 +44,19 @@ function UserLoginPage() {
       if (res.status === 200) {
         if (res.data.user_role === "user") {
           const decodedToken = jwtDecode(res.data.user_access_token)
-          console.log(decodedToken)
           dispatch(
             login({
               userid: decodedToken.user_id,
               username: res.data.user_name,
               user_role: res.data.user_role,
               useremail: formData.email,
+              isAuthenticated: true,
+            })
+          )
+          dispatch(
+            setUserTokens({
               user_access_token: res.data.user_access_token,
               user_refresh_token: res.data.user_refresh_token,
-              isAuthenticated: true,
             })
           )
           navigate("/")
@@ -62,9 +67,13 @@ function UserLoginPage() {
             admin_login({
               admin_username: res.data.admin_username,
               admin_role: res.data.admin_role,
+              isAuthenticated_admin: true,
+            })
+          )
+          dispatch(
+            setAdminTokens({
               admin_access_token: res.data.admin_access_token,
               admin_refresh_token: res.data.admin_refresh_token,
-              isAuthenticated_admin: true,
             })
           )
           navigate("/AdminHome/AdminUser")

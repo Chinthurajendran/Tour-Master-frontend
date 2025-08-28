@@ -19,18 +19,21 @@ const EnquiriesManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
+    <div className="flex flex-col bg-gradient-to-br text-white">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-gradient-to-br from-gray-50 to-blue-50 pb-4">
-        <div className="flex items-center gap-3 mb-1">
-          <FileText className="w-8 h-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-800">
-            Enquiries Management
-          </h1>
+
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg p-6 mb-7 shadow-md border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-extrabold text-gray-800 flex items-center gap-3">
+              <FileText className="w-9 h-9 text-blue-600" />
+              Enquiries Management
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Track and respond to customer enquiries quickly and efficiently.
+            </p>
+          </div>
         </div>
-        <p className="text-gray-500 text-sm">
-          Track and respond to customer enquiries quickly and efficiently.
-        </p>
       </div>
 
       {/* Enquiries Grid */}

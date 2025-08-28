@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react"
-import { Plus, X, Pencil, Trash2, Image as ImageIcon, UploadCloud } from "lucide-react"
+import {
+  Plus,
+  X,
+  Pencil,
+  Trash2,
+  Image as ImageIcon,
+  UploadCloud,
+} from "lucide-react"
 import axiosInstance from "../../utils/axiosInstance"
 import { toast } from "react-toastify"
 
@@ -29,6 +36,7 @@ const AdminBannerManagement = () => {
     const file = e.target.files[0]
     if (file) {
       setImageFile(file)
+      setTitle(file.name)
       setPreviewUrl(URL.createObjectURL(file))
     }
   }
@@ -63,9 +71,13 @@ const AdminBannerManagement = () => {
     formData.append("name", title)
     if (imageFile) formData.append("image", imageFile)
     try {
-      const res = await axiosInstance.put(`update-banner/${editingBannerId}/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      const res = await axiosInstance.put(
+        `update-banner/${editingBannerId}/`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      )
       setBanners((prev) =>
         prev.map((b) => (b.id === editingBannerId ? res.data : b))
       )
@@ -96,25 +108,28 @@ const AdminBannerManagement = () => {
   }
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="flex flex-col bg-gradient-to-br text-white">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/70 backdrop-blur-lg border-b border-gray-200 p-4 shadow-md flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-            <ImageIcon className="w-7 h-7 text-blue-600" />
-            Banner Management
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Manage and update homepage banners
-          </p>
+
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-lg p-6 shadow-md border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-extrabold text-gray-800 flex items-center gap-3">
+              <ImageIcon className="w-9 h-9 text-blue-600" />
+              Banner Management
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Manage and update homepage banners.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-md transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            Add Bannery
+          </button>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium px-5 py-2 rounded-xl flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          Add Banner
-        </button>
       </div>
 
       {/* Banner Grid */}
@@ -172,12 +187,14 @@ const AdminBannerManagement = () => {
               placeholder="Banner Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border px-4 py-2 rounded-lg mb-4 focus:ring-2 focus:ring-blue-400"
+              className="w-full border px-4 py-2 rounded-lg mb-4 focus:ring-2 focus:ring-blue-400 text-black"
             />
 
             <label className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors mb-4">
               <UploadCloud className="w-6 h-6 text-gray-500 mb-2" />
-              <span className="text-sm text-gray-500">Click or drag image here</span>
+              <span className="text-sm text-gray-500">
+                Click or drag image here
+              </span>
               <input
                 type="file"
                 accept="image/*"
